@@ -1,5 +1,6 @@
 # dgcnn-experiment
 
+
 ## Installation
 ```
 pip3 install -r requirements.txt
@@ -33,6 +34,6 @@ You can try the following command
 ```
 python3 exp_classification.py
 ```
-You might have an error at line 79 of data.py<br>
+It might have an error at line 79 of data.py<br>
 If it's possible, please do Farthest Point Sampling there<br>
 Or just delete it to do random sampling
