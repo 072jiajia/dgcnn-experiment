@@ -96,6 +96,7 @@ def test(args, io, model, test_loader, test_name,n_point):
             #Farest point sample
             #data: (B*N*3) => (B*n_point*3)
             data_flipped = data.transpose(1, 2).contiguous()
+
             data = (
                 pointnet2_utils.gather_operation(
                 data_flipped, pointnet2_utils.furthest_point_sample(data, n_point)
@@ -105,7 +106,7 @@ def test(args, io, model, test_loader, test_name,n_point):
                 if n_point is not None
                 else None
             )
-     
+
             data = data.permute(0, 2, 1)
             batch_size = data.size()[0]
 
@@ -232,8 +233,8 @@ if __name__ == "__main__":
                         help='Num of nearest neighbors to use')
     args = parser.parse_args()
 
-    # experiment([256], 'train256')
-    # experiment([512], 'train512')
-    # experiment([1024], 'train1024')
+    experiment([256], 'train256')
+    experiment([512], 'train512')
+    experiment([1024], 'train1024')
     experiment([2048], 'train2048')
     experiment([256, 512, 1024, 2048], 'train_mix')
