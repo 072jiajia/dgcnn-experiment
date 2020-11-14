@@ -93,7 +93,7 @@ def test(args, io, model, test_loader, test_name,n_point):
         for data, label, mask in test_loader:
             # load data
             data, label = data.to(device), label.to(device).squeeze()
-            #Farest sampling points
+            #Farest point sample
             #data: (B*N*3) => (B*n_point*3)
             data_flipped = data.transpose(1, 2).contiguous()
             data = (
