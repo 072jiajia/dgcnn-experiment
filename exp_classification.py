@@ -8,7 +8,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
-
+from pointnet2_ops_lib.pointnet2_ops import pointnet2_utils
 # custom module
 from model import DGCNN_cls
 from util import cal_loss, IOStream
@@ -78,7 +78,7 @@ def train(args, io, model, train_loader, opt):
     return
 
 
-def test(args, io, model, test_loader, test_name):
+def test(args, io, model, test_loader, test_name,n_point):
     with torch.no_grad():
         device = torch.device("cuda")
         model = model.eval()
@@ -93,6 +93,20 @@ def test(args, io, model, test_loader, test_name):
         for data, label, mask in test_loader:
             # load data
             data, label = data.to(device), label.to(device).squeeze()
+            #Farest point sample
+            #data: (B*N*3) => (B*n_point*3)
+            data_flipped = data.transpose(1, 2).contiguous()
+
+            data = (
+                pointnet2_utils.gather_operation(
+                data_flipped, pointnet2_utils.furthest_point_sample(data, n_point)
+                )
+                .transpose(1, 2)
+                .contiguous()
+                if n_point is not None
+                else None
+            )
+
             data = data.permute(0, 2, 1)
             batch_size = data.size()[0]
 
@@ -150,7 +164,7 @@ def experiment(n_points_choices, path):
                                          args.batch_size)
     train_loader = DataLoader(train_dataset,
                               batch_sampler=train_sampler,
-                              num_workers=16)
+                              num_workers=32)
 
     # initialize test data loaders
     test_dataset256 = ScanObject_coseg(partition='test', n_points=256)
@@ -188,10 +202,10 @@ def experiment(n_points_choices, path):
         scheduler.step()
 
         # test
-        test(args, io, model, test_loader256, 'Test 256 ')
-        test(args, io, model, test_loader512, 'Test 512 ')
-        test(args, io, model, test_loader1024, 'Test 1024')
-        test(args, io, model, test_loader2048, 'Test 2048')
+        test(args, io, model, test_loader256, 'Test 256 ',256)
+        test(args, io, model, test_loader512, 'Test 512 ',515)
+        test(args, io, model, test_loader1024, 'Test 1024',1024)
+        test(args, io, model, test_loader2048, 'Test 2048',2048)
 
 
 if __name__ == "__main__":

@@ -5,10 +5,10 @@ import h5py
 import numpy as np
 import torch
 from torch.utils.data import Dataset, BatchSampler
-
+from pointnet2_ops_lib.pointnet2_ops import pointnet2_utils
 # os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 def load_mask(partition, permute):
-    raw_path='/home/kschen/dgcnn_pytorch/dgcnn.pytorch/data/h5_files/main_split'
+    raw_path='data/h5_files/main_split'
     data = h5py.File("{}/{}_objectdataset_{}.h5".format(raw_path, partition, permute), 'r+')
     mask = data['mask']
     mask[mask != -1] = 1
@@ -22,7 +22,7 @@ class ScanObject_coseg(Dataset):
           6: 'display', 7: 'door', 8: 'shelf', 9: 'table', 10: 'bed', 11: 'pillow',
           12: 'sink', 13: 'sofa', 14: 'toilet', 15: 'all'}
     """
-    def __init__(self,raw_path='data/scanobjectnn/main_split', n_points=1024, 
+    def __init__(self,raw_path='data/h5_files/main_split', n_points=1024, 
              partition='training', permute='raw', obj=15, label_binarize=True, norm=True, center=True):       
         cat_to_label = {0: 'bag', 1: 'bin', 2: 'box', 3: 'cabinet', 4: 'chair', 5: 'desk',
                         6: 'display', 7: 'door', 8: 'shelf', 9: 'table', 10: 'bed', 11: 'pillow',
@@ -73,13 +73,11 @@ class ScanObject_coseg(Dataset):
 
         if self.partition == 'training':
             coord = translate_pointcloud(coord)
-
         if self.partition == 'test':
-            # You can delete the following line to do random sampling
-            RuntimeError('Please Delete This Line Or Do The Farthest Point Sampling Here')
-            pass
-
-        return coord, label, mask
+            return self.points[item],self.labels[item],self.masks[item]
+        else:
+            return coord, label, mask
+   
 
     def __len__(self):
         return len(self.points)
@@ -99,6 +97,7 @@ def translate_pointcloud(pointcloud):
     xyz2 = np.random.uniform(low=-0.2, high=0.2, size=[3])
        
     translated_pointcloud = np.add(np.multiply(pointcloud, xyz1), xyz2).astype('float32')
+    #print(translated_pointcloud.shape)
     return translated_pointcloud
 
 class TrainingBatchSampler(BatchSampler):
